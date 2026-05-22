@@ -86,6 +86,7 @@ def load_config():
         },
         'database': {
             'host': 'FLEET_DB_HOST',
+            'port': 'FLEET_DB_PORT',
             'user': 'FLEET_DB_USER',
             'password': 'FLEET_DB_PASSWORD',
             'database': 'FLEET_DB_NAME',
@@ -1458,8 +1459,14 @@ def get_db_connection():
     try:
         config = load_config()
         db_conf = config.get('database', {})
+        db_port = db_conf.get('port', 3306)
+        try:
+            db_port = int(db_port)
+        except (TypeError, ValueError):
+            db_port = 3306
         conn = mysql.connector.connect(
             host=db_conf.get('host', 'localhost'),
+            port=db_port,
             user=db_conf.get('user', 'root'),
             password=db_conf.get('password', ''),
             database=db_conf.get('database', 'fleet_analytics')

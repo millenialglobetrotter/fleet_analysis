@@ -123,12 +123,27 @@ FLEET_DECRYPTION_SERVICE_ENDPOINT
 FLEET_DECRYPTION_SERVICE_CLIENT_ID
 FLEET_DECRYPTION_SERVICE_CLIENT_SECRET
 FLEET_DB_HOST
+FLEET_DB_PORT
 FLEET_DB_USER
 FLEET_DB_PASSWORD
 FLEET_DB_NAME
 ```
 
 Do not upload [config.json](config.json) to Railway. Put secrets into Railway environment variables instead.
+
+### Railway MySQL service wiring
+
+If you add a MySQL database service in Railway, map these values into your app service variables:
+
+```text
+FLEET_DB_HOST=${{MySQL.MYSQLHOST}}
+FLEET_DB_PORT=${{MySQL.MYSQLPORT}}
+FLEET_DB_USER=${{MySQL.MYSQLUSER}}
+FLEET_DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+FLEET_DB_NAME=${{MySQL.MYSQLDATABASE}}
+```
+
+If your Railway project uses a different database service name than `MySQL`, use that service name in the variable references.
 
 ## Azure App Service notes
 
