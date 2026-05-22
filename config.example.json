@@ -1,0 +1,29 @@
+{
+  "note": "Example config for local fallback only. Prefer environment variables for deployment.",
+  "auth": {
+    "base_url": "https://ncvocj.condense.zeliot.in/vehicle-da-mgmt",
+    "endpoint": "/api/auth",
+    "client_id": "your-client-id",
+    "client_secret": "replace-me"
+  },
+  "vehicle_registry": {
+    "base_url": "https://ncvocj.condense.zeliot.in/vehicle-da-mgmt",
+    "endpoint": "/api/customers"
+  },
+  "prediction_service": {
+    "base_url": "https://ncvocj.condense.zeliot.in/da-vehicle-functions",
+    "url_template": "/api/predict-result/{id}?&from={from_date}&to={to_date}"
+  },
+  "decryption_service": {
+    "base_url": "https://mscd-dev-prog-da-pred-af.azurewebsites.net",
+    "endpoint": "/api/decrypt",
+    "client_id": "your-client-id",
+    "client_secret": "replace-me"
+  },
+  "database": {
+    "host": "localhost",
+    "user": "fleet_user",
+    "password": "replace-me",
+    "database": "fleet_analytics"
+  }
+}
