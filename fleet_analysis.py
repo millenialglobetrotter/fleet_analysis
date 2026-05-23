@@ -460,25 +460,27 @@ HTML_TEMPLATE = r"""
                         </div>
                     </div>
                     <!-- LEADERBOARDS -->
-                    <div class="sec-lbl">&#9656; SCORES LEADERBOARD</div>
-                    <div class="grid2">
-                        <div class="icard">
-                            <div class="ict"><span class="dot" style="background:var(--cg)"></span>Top 3 Driver Scores</div>
-                            <div class="rlist" id="topDriverList"></div>
+                    <div id="scoreLeaderboardSection">
+                        <div class="sec-lbl">&#9656; SCORES LEADERBOARD</div>
+                        <div class="grid2">
+                            <div class="icard">
+                                <div class="ict"><span class="dot" style="background:var(--cg)"></span>Top 3 Driver Scores</div>
+                                <div class="rlist" id="topDriverList"></div>
+                            </div>
+                            <div class="icard">
+                                <div class="ict"><span class="dot" style="background:var(--cr)"></span>Bottom 3 Driver Scores</div>
+                                <div class="rlist" id="botDriverList"></div>
+                            </div>
                         </div>
-                        <div class="icard">
-                            <div class="ict"><span class="dot" style="background:var(--cr)"></span>Bottom 3 Driver Scores</div>
-                            <div class="rlist" id="botDriverList"></div>
-                        </div>
-                    </div>
-                    <div class="grid2">
-                        <div class="icard">
-                            <div class="ict"><span class="dot" style="background:var(--cg)"></span>Top 3 Fuel Scores</div>
-                            <div class="rlist" id="topFuelList"></div>
-                        </div>
-                        <div class="icard">
-                            <div class="ict"><span class="dot" style="background:var(--cr)"></span>Bottom 3 Fuel Scores</div>
-                            <div class="rlist" id="botFuelList"></div>
+                        <div class="grid2">
+                            <div class="icard">
+                                <div class="ict"><span class="dot" style="background:var(--cg)"></span>Top 3 Fuel Scores</div>
+                                <div class="rlist" id="topFuelList"></div>
+                            </div>
+                            <div class="icard">
+                                <div class="ict"><span class="dot" style="background:var(--cr)"></span>Bottom 3 Fuel Scores</div>
+                                <div class="rlist" id="botFuelList"></div>
+                            </div>
                         </div>
                     </div>
                     <!-- FUEL ANALYSIS -->
@@ -1173,6 +1175,7 @@ function renderAgg(sel){
     const avgEcon=n?(totalFuel>0?totalDist/totalFuel:0):0;
     const avgDriver=n?sumDriverScore/n:0;
     const avgFuel=n?sumFuelScore/n:0;
+    const showLeaderboard=n>0 && n===days.length;
     const totalHarsh=hB+hA+hC;
     const totalWaste=idleFuel+overspeedFuel+overrevFuel;
     const wastePct=totalFuel>0?totalWaste/totalFuel*100:0;
@@ -1186,7 +1189,11 @@ function renderAgg(sel){
     set('topDriverScore',avgDriver.toFixed(1)); set('topFuelScore',avgFuel.toFixed(1));
     set('driverArcLbl',avgDriver.toFixed(1)); set('fuelArcLbl',avgFuel.toFixed(1));
     animArc('driverArc',avgDriver,5); animArc('fuelArc',avgFuel,5);
-    renderLeaderboards(sel,'driver'); renderLeaderboards(sel,'fuel');
+    const leaderboardSection=document.getElementById('scoreLeaderboardSection');
+    if(leaderboardSection) leaderboardSection.style.display=showLeaderboard?'block':'none';
+    if(showLeaderboard){
+        renderLeaderboards(sel,'driver'); renderLeaderboards(sel,'fuel');
+    }
     renderTopWasters(sel);
 
     set('wValIdle',`${idleFuel.toFixed(3)} L`);
