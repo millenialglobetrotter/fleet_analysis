@@ -160,6 +160,10 @@ HTML_TEMPLATE = r"""
         .hdr-pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
         .hdr-pill b{color:var(--c)}
         .control-panel{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--bg3);padding:10px;border-radius:8px;border:1px solid var(--border);flex:1}
+        .vehicle-meta-bar{display:none;flex-wrap:wrap;gap:8px;align-items:center;background:var(--bg3);padding:8px 10px;border-radius:8px;border:1px solid var(--border)}
+        .vehicle-meta-bar.show{display:flex}
+        .vehicle-meta-chip{display:flex;gap:6px;align-items:center;max-width:100%;padding:5px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)}
+        .vehicle-meta-chip b{color:var(--c)}
         .cp-group{display:flex;flex-direction:column;gap:4px;flex:1}
         .cp-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;font-weight:600}
         .cp-inputs{display:flex;gap:8px;align-items:center;width:100%}
@@ -327,7 +331,9 @@ HTML_TEMPLATE = r"""
         .cmp-col::-webkit-scrollbar{width:4px}
         .cmp-col::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
         .cmp-col:first-child{border-right:1px solid var(--border)}
-        .cmp-header{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--c);padding:8px 10px;background:rgba(8,145,178,0.06);border:1px solid rgba(8,145,178,0.2);border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; text-align: left; display: flex; align-items: center; justify-content: flex-start;}
+        .cmp-header{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--c);padding:8px 10px;background:rgba(8,145,178,0.06);border:1px solid rgba(8,145,178,0.2);border-radius:6px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px}
+        .cmp-title{font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .cmp-meta{font-size:10px;font-weight:500;color:var(--text2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .cmp-score-row{display:flex;gap:10px}
         .cmp-score-box{flex:1;background:var(--bg3);border-radius:6px;padding:10px;text-align:center}
         .cmp-score-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
@@ -375,6 +381,7 @@ HTML_TEMPLATE = r"""
                 <button class="btn-secondary" id="btnFilter" onclick="openFilterModal()">Filter Vehicles (0)</button>
                 <button class="btn-primary" id="btnFetch" onclick="runAnalysis()">FETCH DATA</button>
             </div>
+            <div id="selectedVehicleMetaBar" class="vehicle-meta-bar"></div>
         </div>
 
         <div class="layout">
@@ -486,7 +493,7 @@ HTML_TEMPLATE = r"""
                     <!-- FUEL ANALYSIS -->
                     <div class="sec-lbl">&#9656; FUEL ANALYSIS</div>
                     <div class="grid3">
-                        <div class="icard">
+                        <div class="icard" id="efficiencyCard">
                             <div class="ict"><span class="dot" style="background:var(--cg)"></span>Efficiency</div>
                             <div class="ir" style="cursor:default"><span class="ir-l">Fuel per 100 km</span><span class="ir-v" id="iFuelPer100">&#8212;</span></div>
                             <div class="ir" style="cursor:default"><span class="ir-l">Best Economy Trip</span><span class="ir-v g" id="iBestEcon">&#8212;</span></div>
@@ -515,7 +522,7 @@ HTML_TEMPLATE = r"""
                                 <span class="waste-val" id="iWastePct" style="margin-left:auto; min-width:auto; padding-left:10px;">&#8212;</span>
                             </div>
                         </div>
-                        <div class="icard">
+                        <div class="icard" id="topWastersCard">
                             <div class="ict"><span class="dot" style="background:var(--cr)"></span>Top 2 Fuel Wasters</div>
                             <div id="topWastersList"></div>
                         </div>
@@ -975,6 +982,28 @@ function getSelIds(){return selectAll?days.map(d=>d._id):Object.keys(selected).m
 function set(id,val){const e=document.getElementById(id);if(e)e.textContent=val}
 function showToast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast${err?' err':''} show`;setTimeout(()=>t.classList.remove('show'),5000)}
 function scColor(v,max){const r=v/(max||5);return r>=0.8?'var(--cg)':r>=0.5?'var(--co)':'var(--cr)'}
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function getVehicleMeta(vehicleId){return allVehicles.find(v=>v.vehicle_id===vehicleId)||null}
+function getVehicleMetaText(vehicleId){
+    const m=getVehicleMeta(vehicleId);
+    if(!m) return 'Make: N/A | Model: N/A | Variant: N/A';
+    return `Make: ${m.make||'N/A'} | Model: ${m.model||'N/A'} | Variant: ${m.variant||'N/A'}`;
+}
+function renderSelectedVehicleMeta(sel){
+    const bar=document.getElementById('selectedVehicleMetaBar');
+    if(!bar) return;
+    if(!sel.length){
+        bar.classList.remove('show');
+        bar.innerHTML='';
+        return;
+    }
+    bar.innerHTML=sel.map(d=>{
+        const id=esc(d.date_label);
+        const meta=esc(getVehicleMetaText(d.date_label));
+        return `<div class="vehicle-meta-chip" title="${id} | ${meta}"><b>${id}</b><span>${meta}</span></div>`;
+    }).join('');
+    bar.classList.add('show');
+}
 function animArc(id,score,max){
     const arc=document.getElementById(id);if(!arc)return;
     const c=2*Math.PI*25,vis=Math.min(score,max);
@@ -1176,6 +1205,7 @@ function renderAgg(sel){
     const avgDriver=n?sumDriverScore/n:0;
     const avgFuel=n?sumFuelScore/n:0;
     const showLeaderboard=n>0 && n===days.length;
+    const showAllVehicleInsights=n>0 && n===days.length;
     const totalHarsh=hB+hA+hC;
     const totalWaste=idleFuel+overspeedFuel+overrevFuel;
     const wastePct=totalFuel>0?totalWaste/totalFuel*100:0;
@@ -1194,7 +1224,13 @@ function renderAgg(sel){
     if(showLeaderboard){
         renderLeaderboards(sel,'driver'); renderLeaderboards(sel,'fuel');
     }
-    renderTopWasters(sel);
+    const efficiencyCard=document.getElementById('efficiencyCard');
+    if(efficiencyCard) efficiencyCard.style.display=showAllVehicleInsights?'block':'none';
+    const topWastersCard=document.getElementById('topWastersCard');
+    if(topWastersCard) topWastersCard.style.display=showAllVehicleInsights?'block':'none';
+    if(showAllVehicleInsights){
+        renderTopWasters(sel);
+    }
 
     set('wValIdle',`${idleFuel.toFixed(3)} L`);
     set('wValOver',`${overspeedFuel.toFixed(3)} L`);
@@ -1281,9 +1317,10 @@ function renderComparison(vehicles){
                         <span class="waste-val" style="margin-left:auto; min-width:auto; padding-left:10px;">(${wastePct}%)</span>
                       </div>`;
 
+        const metaLabel=getVehicleMetaText(d.date_label);
         return`
         <div class="cmp-col">
-            <div class="cmp-header">${d.date_label}</div>
+            <div class="cmp-header"><div class="cmp-title">${d.date_label}</div><div class="cmp-meta">${esc(metaLabel)}</div></div>
             <div class="icard">
                 <div class="ict">Scores</div>
                 <div class="cmp-score-row">
@@ -1395,6 +1432,7 @@ function refresh(){
     const ids=getSelIds();
     const sel=days.filter(d=>ids.includes(d._id));
     const n=sel.length;
+    renderSelectedVehicleMeta(sel);
 
     const mainPanel=document.getElementById('mainPanel');
     mainPanel.style.padding='20px';
