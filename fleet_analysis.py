@@ -327,7 +327,7 @@ HTML_TEMPLATE = r"""
         /* Comparison layout fixes */
         #cmpContent{height:100%;display:none;flex-direction:column;overflow:hidden;}
         .cmp-wrap{display:grid;grid-template-columns:1fr 1fr;height:100%;overflow:hidden}
-        .cmp-col{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+        .cmp-col{overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:12px}
         .cmp-col::-webkit-scrollbar{width:4px}
         .cmp-col::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
         .cmp-col:first-child{border-right:1px solid var(--border)}
@@ -989,10 +989,10 @@ function getVehicleMetaText(vehicleId){
     if(!m) return 'Make: N/A | Model: N/A | Variant: N/A';
     return `Make: ${m.make||'N/A'} | Model: ${m.model||'N/A'} | Variant: ${m.variant||'N/A'}`;
 }
-function renderSelectedVehicleMeta(sel){
+function renderSelectedVehicleMeta(sel, showMeta=false){
     const bar=document.getElementById('selectedVehicleMetaBar');
     if(!bar) return;
-    if(!sel.length){
+    if(!showMeta||!sel.length){
         bar.classList.remove('show');
         bar.innerHTML='';
         return;
@@ -1432,7 +1432,6 @@ function refresh(){
     const ids=getSelIds();
     const sel=days.filter(d=>ids.includes(d._id));
     const n=sel.length;
-    renderSelectedVehicleMeta(sel);
 
     const mainPanel=document.getElementById('mainPanel');
     mainPanel.style.padding='20px';
@@ -1460,6 +1459,10 @@ function refresh(){
 
     // When toggle bar appears for compare, stay in cmp; reset to agg when leaving
     if(!canToggle && !hasClose) viewMode='agg';
+
+    // Vehicle metadata chips are shown only in explicit comparison view with manual selection.
+    const showMetaInHeader = canToggle && viewMode==='cmp' && !selectAll;
+    renderSelectedVehicleMeta(sel, showMetaInHeader);
 
     // Keep tab indicators in sync
     document.getElementById('vtabAgg').classList.toggle('active', viewMode==='agg');
