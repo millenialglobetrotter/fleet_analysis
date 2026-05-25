@@ -11,7 +11,7 @@
     "endpoint": "/api/customers"
   },
   "prediction_service": {
-    "base_url": "https://ncvocj.condense.zeliot.in/da-vehicle-functions",
+    "base_url": "https://ncvocj.condense.zeliot.in/da-vehicle-functions-non-queue",
     "url_template": "/api/predict-result/{id}?&from={from_date}&to={to_date}"
   },
   "decryption_service": {
